@@ -3,13 +3,15 @@ import * as auth_services from '../services/auth.services.js'
 export async function register(request, response, next) {
     try {
         const { nombre, email, password } = request.body
-        const user = await auth_services.registerUser(nombre, email, password)
+        const result = await auth_services.registerUser(nombre, email, password)
 
         return response.status(201).json({
             ok: true,
             status: 201,
-            message: 'Usuario registrado con éxito. Hemos enviado un correo para verificar tu cuenta.',
-            data: { user }
+            message: result.email_sent
+                ? 'Usuario registrado con éxito. Hemos enviado un correo para verificar tu cuenta.'
+                : 'Usuario registrado con éxito. Si no recibiste el correo por falta de configuración de Gmail en el servidor, puedes activar tu cuenta con el enlace facilitado.',
+            data: result
         })
     } catch (error) {
         next(error)
@@ -50,12 +52,13 @@ export async function verifyEmail(request, response, next) {
 export async function resendVerification(request, response, next) {
     try {
         const { email } = request.params
-        await auth_services.resendVerificationEmail(email)
+        const result = await auth_services.resendVerificationEmail(email)
 
         return response.status(200).json({
             ok: true,
             status: 200,
-            message: 'Si el correo está registrado y pendiente de validación, recibirás un nuevo enlace.'
+            message: 'Si el correo está registrado y pendiente de validación, recibirás un nuevo enlace.',
+            data: result || {}
         })
     } catch (error) {
         next(error)
@@ -65,12 +68,13 @@ export async function resendVerification(request, response, next) {
 export async function forgotPassword(request, response, next) {
     try {
         const { email } = request.body
-        await auth_services.forgotPassword(email)
+        const result = await auth_services.forgotPassword(email)
 
         return response.status(200).json({
             ok: true,
             status: 200,
-            message: 'Si el correo existe en nuestra plataforma, hemos enviado instrucciones para restablecer tu contraseña.'
+            message: 'Si el correo existe en nuestra plataforma, hemos enviado instrucciones para restablecer tu contraseña.',
+            data: result || {}
         })
     } catch (error) {
         next(error)
