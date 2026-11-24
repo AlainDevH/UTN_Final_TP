@@ -22,7 +22,6 @@ async function sendVerificationEmailTo(email) {
     )
 
     const verification_url = `${ENVIRONMENT.URL_FRONTEND}/verify-email?token=${token}`
-    let email_sent = false
 
     if (isMailerConfigured()) {
         try {
@@ -32,18 +31,13 @@ async function sendVerificationEmailTo(email) {
                 subject: 'Verifica tu cuenta de CheckWork',
                 html: verificationEmailTemplate(verification_url)
             })
-            email_sent = true
-            console.log(`[Nodemailer] Correo de verificación enviado exitosamente a: ${email}`)
         } catch (error) {
             console.error('[Nodemailer] Error al enviar correo de verificación:', error.message)
-            email_sent = false
         }
     } else {
-        console.log('[DEV] Simulación de correo de verificación (Gmail no configurado en .env):')
+        console.log('[DEV] Simulación de envío de correo de activación:')
         console.log(`URL de verificación: ${verification_url}`)
     }
-
-    return { verification_url, email_sent }
 }
 
 async function sendPasswordResetEmailTo(email) {
@@ -54,7 +48,6 @@ async function sendPasswordResetEmailTo(email) {
     )
 
     const reset_url = `${ENVIRONMENT.URL_FRONTEND}/reset-password?token=${token}`
-    let email_sent = false
 
     if (isMailerConfigured()) {
         try {
@@ -64,18 +57,13 @@ async function sendPasswordResetEmailTo(email) {
                 subject: 'Restablece tu contraseña de CheckWork',
                 html: resetPasswordEmailTemplate(reset_url)
             })
-            email_sent = true
-            console.log(`[Nodemailer] Correo de restablecimiento enviado exitosamente a: ${email}`)
         } catch (error) {
             console.error('[Nodemailer] Error al enviar correo de restablecimiento:', error.message)
-            email_sent = false
         }
     } else {
-        console.log('[DEV] Simulación de correo de restablecimiento (Gmail no configurado en .env):')
+        console.log('[DEV] Simulación de correo de restablecimiento:')
         console.log(`URL de reseteo: ${reset_url}`)
     }
-
-    return { reset_url, email_sent }
 }
 
 export async function registerUser(nombre, email, password) {
@@ -103,16 +91,12 @@ export async function registerUser(nombre, email, password) {
         email_verificado: false
     })
 
-    const mailResult = await sendVerificationEmailTo(newUser.email)
+    await sendVerificationEmailTo(newUser.email)
 
     return {
-        user: {
-            id: newUser._id,
-            nombre: newUser.nombre,
-            email: newUser.email
-        },
-        verification_url: mailResult.verification_url,
-        email_sent: mailResult.email_sent
+        id: newUser._id,
+        nombre: newUser.nombre,
+        email: newUser.email
     }
 }
 
@@ -196,9 +180,8 @@ export async function resendVerificationEmail(email) {
     const user = await user_repository.getByEmail(email)
     // Respuesta genérica para evitar enumeración de usuarios
     if (user && user.activo && !user.email_verificado) {
-        return await sendVerificationEmailTo(user.email)
+        await sendVerificationEmailTo(user.email)
     }
-    return null
 }
 
 export async function forgotPassword(email) {
@@ -207,9 +190,8 @@ export async function forgotPassword(email) {
     const user = await user_repository.getByEmail(email)
     // Respuesta genérica para evitar enumeración
     if (user && user.activo) {
-        return await sendPasswordResetEmailTo(user.email)
+        await sendPasswordResetEmailTo(user.email)
     }
-    return null
 }
 
 export async function resetPasswordWithToken(token, newPassword) {

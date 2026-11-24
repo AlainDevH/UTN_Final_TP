@@ -242,7 +242,7 @@ export default function TasksScreen() {
                     Cargando tareas...
                 </div>
             ) : filteredTasks.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '64px 0', background: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div style={{ textAlign: 'center', padding: '64px 24px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
                     <p style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '8px' }}>
                         No se encontraron tareas con los filtros seleccionados
                     </p>

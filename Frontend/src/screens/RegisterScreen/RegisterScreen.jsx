@@ -18,7 +18,6 @@ export default function RegisterScreen() {
     })
     const { loading, error, sendRequest, setError } = useRequest()
     const [successMessage, setSuccessMessage] = useState(null)
-    const [registrationResult, setRegistrationResult] = useState(null)
 
     async function handleSubmit(e) {
         e.preventDefault()
@@ -32,7 +31,6 @@ export default function RegisterScreen() {
             const res = await sendRequest(() =>
                 registerService(formState.nombre, formState.email, formState.password)
             )
-            setRegistrationResult(res.data)
             setSuccessMessage(res.message || 'Registro exitoso. Revisa tu correo electrónico para activar la cuenta.')
             resetForm()
         } catch (err) {
@@ -54,43 +52,10 @@ export default function RegisterScreen() {
                 {successMessage ? (
                     <div>
                         <Alert type="success">{successMessage}</Alert>
-
-                        {registrationResult?.verification_url && !registrationResult?.email_sent && (
-                            <div style={{
-                                margin: '18px 0',
-                                padding: '16px',
-                                background: 'rgba(139, 92, 246, 0.12)',
-                                border: '1px solid rgba(139, 92, 246, 0.3)',
-                                borderRadius: 'var(--radius-sm)',
-                                textAlign: 'left'
-                            }}>
-                                <div style={{ fontSize: '13px', color: 'var(--text-main)', marginBottom: '10px', lineHeight: '1.5' }}>
-                                    ⚡ <strong>Modo Local / Sin Gmail configurado:</strong>
-                                    <div style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>
-                                        Como el servidor aún no tiene credenciales válidas de Gmail en <code>Backend/.env</code>, puedes activar tu cuenta directamente con este botón:
-                                    </div>
-                                </div>
-                                <a
-                                    href={registrationResult.verification_url}
-                                    className="btn-primary"
-                                    style={{
-                                        width: '100%',
-                                        display: 'inline-flex',
-                                        justifyContent: 'center',
-                                        textDecoration: 'none'
-                                    }}
-                                >
-                                    👉 Activar mi cuenta ahora
-                                </a>
-                            </div>
-                        )}
-
                         <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '16px 0', lineHeight: '1.6' }}>
-                            {registrationResult?.email_sent
-                                ? 'Hemos enviado un enlace de activación a tu correo electrónico válido por 7 días.'
-                                : 'Una vez que confirmes tu correo, podrás iniciar sesión normalmente.'}
+                            Te enviamos un enlace de activación válido por 7 días. Una vez que confirmes tu correo, podrás iniciar sesión.
                         </p>
-                        <Link to="/login" className="btn-secondary" style={{ width: '100%', textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
+                        <Link to="/login" className="btn-primary" style={{ width: '100%', textDecoration: 'none' }}>
                             Ir a Iniciar Sesión
                         </Link>
                     </div>

@@ -242,7 +242,7 @@ export default function ProjectDetailScreen() {
             </div>
 
             {tasks.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '48px', background: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div style={{ textAlign: 'center', padding: '48px 24px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
                     <p style={{ fontSize: '15px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
                         Este proyecto aún no tiene ninguna tarea asociada.
                     </p>
