@@ -85,45 +85,66 @@ Backend/
 
 ## 4. Endpoints de la API
 
-Formato de respuesta unificado:
-* Éxito: `{ ok: true, status: 200|201, message: "...", data?: {...} }`
-* Error: `{ ok: false, status: 400|401|403|404|500, message: "..." }`
+### Convenciones generales
 
-### 4.1 Autenticación (`/api/auth`)
+* Todas las rutas de la API usan JSON.
+* Los endpoints protegidos requieren `Authorization: Bearer <token>`.
+* El token JWT se obtiene mediante `POST /api/auth/login` y tiene una duración de 24 horas.
+* Respuesta exitosa: `{ ok: true, status: 200|201, message: "...", data?: {...} }`
+* Respuesta de error: `{ ok: false, status: 400|401|403|404|500|503, message: "..." }`
 
-| Método | Endpoint | Acceso | Descripción |
+### 4.1 Estado y documentación
+
+| Método | Endpoint | Acceso | Finalidad |
 |---|---|---|---|
-| `POST` | `/api/auth/register` | Público | Registra usuario y envía correo con enlace de activación |
-| `POST` | `/api/auth/login` | Público | Autentica credenciales y devuelve token JWT Bearer |
-| `GET` | `/api/auth/verify-email?token=...` | Público | Activa la cuenta con el token de activación recibido |
-| `GET` | `/api/auth/verify-email/:email/resend` | Público | Reenvía el correo de verificación si la cuenta está pendiente |
-| `POST` | `/api/auth/forgot-password` | Público | Envía enlace temporal para restablecimiento de contraseña |
-| `POST` | `/api/auth/reset-password` | Público | Aplica la nueva contraseña mediante token |
-| `GET` | `/api/auth/me` | Protegido (Bearer) | Obtiene los datos del usuario en sesión |
+| `GET` | `/` | Público | Comprueba que la API está operativa y devuelve la ubicación de la documentación. |
+| `GET` | `/api/docs` | Público | Abre la interfaz interactiva Swagger UI. |
+| `GET` | `/api/docs/openapi.json` | Público | Devuelve la especificación OpenAPI 3.1 en formato JSON. |
 
-### 4.2 Proyectos (`/api/projects`) — Entidad Relacionada
+### 4.2 Autenticación (`/api/auth`)
 
-Todos requieren encabezado `Authorization: Bearer <token>`.
+| Método | Endpoint | Acceso | Body / parámetros | Finalidad |
+|---|---|---|---|---|
+| `POST` | `/api/auth/register` | Público | `{ "nombre": "...", "email": "...", "password": "..." }` | Crea una cuenta pendiente de verificación. Valida el formato del email, exige una contraseña de al menos 6 caracteres y envía un enlace de activación por correo. |
+| `POST` | `/api/auth/login` | Público | `{ "email": "...", "password": "..." }` | Valida las credenciales y, si la cuenta está activa y verificada, devuelve el token JWT y los datos básicos del usuario. |
+| `GET` | `/api/auth/verify-email?token=...` | Público | Query `token`: token JWT recibido por correo | Verifica el token y marca la cuenta como `email_verificado`. |
+| `GET` | `/api/auth/verify-email/:email/resend` | Público | Ruta `email`: dirección de correo | Reenvía el enlace de activación únicamente si la cuenta existe, está activa y aún no está verificada. La respuesta no revela si el usuario existe. |
+| `POST` | `/api/auth/forgot-password` | Público | `{ "email": "..." }` | Solicita la recuperación de contraseña y envía un enlace temporal válido por 1 hora si la cuenta existe y está activa. La respuesta no revela si el usuario existe. |
+| `POST` | `/api/auth/reset-password` | Público | `{ "token": "...", "password": "..." }` | Valida el token de recuperación y reemplaza la contraseña por una nueva de al menos 6 caracteres. |
+| `GET` | `/api/auth/me` | Protegido | Sin body | Devuelve el perfil del usuario autenticado: identificador, nombre, email y fecha de creación. |
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/projects` | Lista todos los proyectos del usuario con estadísticas de tareas |
-| `GET` | `/api/projects/:project_id` | Detalle del proyecto junto con la lista de sus tareas |
-| `POST` | `/api/projects` | Crea un nuevo proyecto |
-| `PUT` | `/api/projects/:project_id` | Modifica nombre, descripción, color o estado |
-| `DELETE` | `/api/projects/:project_id` | Elimina el proyecto y todas sus tareas asociadas |
+Campos de registro: `nombre` debe ser texto, `email` debe tener formato válido y `password` debe tener como mínimo 6 caracteres.
 
-### 4.3 Tareas (`/api/tasks`) — Entidad Principal
+### 4.3 Proyectos (`/api/projects`) — Entidad Relacionada
 
-Todos requieren encabezado `Authorization: Bearer <token>`.
+Todos los endpoints requieren `Authorization: Bearer <token>`. Cada operación sólo puede acceder a proyectos propiedad del usuario autenticado.
 
-| Método | Endpoint | Query Params / Body | Descripción |
+| Método | Endpoint | Body / parámetros | Finalidad |
 |---|---|---|---|
-| `GET` | `/api/tasks` | `?project_id=...&estado=...&prioridad=...&busqueda=...` | Lista tareas pobladas (`populate`) con soporte de filtros |
-| `GET` | `/api/tasks/:task_id` | Ninguno | Detalle completo de la tarea y proyecto |
-| `POST` | `/api/tasks` | `{ titulo, fk_id_proyecto, descripcion?, estado?, prioridad?, fecha_limite? }` | Crea una tarea en un proyecto del usuario |
-| `PUT` | `/api/tasks/:task_id` | Campos a modificar | Actualiza estado, prioridad, título, proyecto, etc. |
-| `DELETE` | `/api/tasks/:task_id` | Ninguno | Elimina la tarea |
+| `GET` | `/api/projects` | Ninguno | Lista los proyectos del usuario y agrega a cada uno el total de tareas y la cantidad de tareas completadas. |
+| `GET` | `/api/projects/:project_id` | Ruta `project_id`: ID del proyecto | Obtiene el proyecto y la lista de todas sus tareas pertenecientes al usuario autenticado. |
+| `POST` | `/api/projects` | `{ "nombre": "...", "descripcion"?: "...", "color"?: "#4f46e5", "estado"?: "activo" }` | Crea un proyecto. `nombre` es obligatorio (máximo 50 caracteres). Los valores opcionales usan `descripcion = ""`, `color = "#4f46e5"` y `estado = "activo"`. |
+| `PUT` | `/api/projects/:project_id` | Ruta `project_id`; body opcional con `nombre`, `descripcion`, `color` o `estado` | Modifica parcialmente los datos permitidos del proyecto. |
+| `DELETE` | `/api/projects/:project_id` | Ruta `project_id`: ID del proyecto | Elimina el proyecto y realiza una eliminación en cascada de todas sus tareas asociadas. |
+
+Estados válidos de proyecto: `activo`, `archivado`, `completado`. Máximo de descripción: 500 caracteres.
+
+### 4.4 Tareas (`/api/tasks`) — Entidad Principal
+
+Todos los endpoints requieren `Authorization: Bearer <token>`. Cada operación sólo puede acceder a tareas propiedad del usuario autenticado.
+
+| Método | Endpoint | Query / body / parámetros | Finalidad |
+|---|---|---|---|
+| `GET` | `/api/tasks` | `?project_id=<id>&estado=<estado>&prioridad=<prioridad>&busqueda=<texto>` | Lista las tareas del usuario, incluyendo los datos básicos del proyecto asociado. Permite filtrar por proyecto, estado, prioridad y coincidencia de texto en título o descripción. |
+| `GET` | `/api/tasks/:task_id` | Ruta `task_id`: ID de la tarea | Devuelve el detalle completo de una tarea y los datos de su proyecto asociado. |
+| `POST` | `/api/tasks` | `{ "titulo": "...", "fk_id_proyecto": "...", "descripcion"?: "...", "estado"?: "pendiente", "prioridad"?: "media", "fecha_limite"?: "2026-12-31" }` | Crea una tarea dentro de un proyecto propiedad del usuario. `titulo` y `fk_id_proyecto` son obligatorios. |
+| `PUT` | `/api/tasks/:task_id` | Ruta `task_id`; body opcional con `titulo`, `descripcion`, `estado`, `prioridad`, `fecha_limite` o `fk_id_proyecto` | Modifica parcialmente una tarea. Permite cambiar sus datos principales o moverla a otro proyecto propiedad del usuario. |
+| `DELETE` | `/api/tasks/:task_id` | Ruta `task_id`: ID de la tarea | Elimina una tarea del usuario autenticado. |
+
+Estados válidos de tarea: `pendiente`, `en_progreso`, `completada`.  
+Prioridades válidas: `baja`, `media`, `alta`, `urgente`.  
+Límite predeterminado: `fecha_limite = null`, `estado = pendiente`, `prioridad = media`.  
+Máximo de título: 100 caracteres. Máximo de descripción: 1500 caracteres.
 
 ---
 
