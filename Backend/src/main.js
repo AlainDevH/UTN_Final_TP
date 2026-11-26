@@ -14,11 +14,21 @@ const PORT = ENVIRONMENT.PORT
 
 // Middlewares globales
 app.use(cors({
-    origin: ENVIRONMENT.URL_FRONTEND === '*' ? '*' : [
-        ENVIRONMENT.URL_FRONTEND,
-        'http://localhost:5173',
-        'http://127.0.0.1:5173'
-    ].filter(Boolean),
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true)
+        const frontendUrl = ENVIRONMENT.URL_FRONTEND ? ENVIRONMENT.URL_FRONTEND.replace(/\/$/, '') : ''
+        if (
+            frontendUrl === '*' ||
+            origin === frontendUrl ||
+            origin.endsWith('.vercel.app') ||
+            origin.includes('localhost') ||
+            origin.includes('127.0.0.1')
+        ) {
+            return callback(null, true)
+        }
+        return callback(null, true)
+    },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }))
