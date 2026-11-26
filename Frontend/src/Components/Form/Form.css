@@ -24,6 +24,41 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.form-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.form-input-password {
+  padding-right: 44px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: color 0.2s ease, transform 0.1s ease;
+  user-select: none;
+}
+
+.password-toggle-btn:hover {
+  color: var(--primary);
+}
+
+.password-toggle-btn:active {
+  transform: scale(0.9);
+}
+
 .form-input:focus, .form-textarea:focus, .form-select:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-focus);
