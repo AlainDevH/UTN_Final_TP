@@ -14,7 +14,11 @@ export default function useRequest() {
             return result
         } catch (err) {
             setResponse(null)
-            setError(err.message || 'Ocurrió un error inesperado')
+            const isNetworkError = err.message === 'Failed to fetch' || (err.name === 'TypeError' && err.message?.toLowerCase().includes('fetch'))
+            const message = isNetworkError
+                ? 'No se pudo conectar con el backend (http://localhost:8080). Asegúrate de que el servidor esté encendido con "npm run dev".'
+                : (err.message || 'Ocurrió un error inesperado')
+            setError(message)
             throw err
         } finally {
             setLoading(false)

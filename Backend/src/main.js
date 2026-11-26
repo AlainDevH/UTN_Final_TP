@@ -24,6 +24,16 @@ app.use(cors({
 }))
 app.use(express.json())
 
+// Logger de peticiones HTTP en consola
+app.use((req, res, next) => {
+    const start = Date.now()
+    res.on('finish', () => {
+        const duration = Date.now() - start
+        console.log(`[HTTP] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${duration}ms)`)
+    })
+    next()
+})
+
 // Documentación con Swagger UI
 app.get('/api/docs/openapi.json', (request, response) => {
     response.json(openapiSpec)
@@ -64,11 +74,16 @@ app.use(errorHandlerMiddleware)
 
 // Inicio del servidor
 if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
+    app.listen(PORT, async () => {
         console.log(`====================================================`)
         console.log(`🚀 Servidor CheckWork escuchando en http://localhost:${PORT}`)
         console.log(`📖 Documentación Swagger UI en: http://localhost:${PORT}/api/docs`)
         console.log(`====================================================`)
+        try {
+            await connectMongoDB()
+        } catch (err) {
+            console.error('[MongoDB] Error al conectar al iniciar:', err.message)
+        }
     })
 }
 
